@@ -1,0 +1,66 @@
+name: Release
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: write      # create the release
+      id-token: write      # sign the build provenance
+      attestations: write  # record it
+    steps:
+      - uses: actions/checkout@v4
+
+      # No toolchain setup step on purpose: the C# compiler is part of Windows,
+      # which is exactly what the project promises anyone building it locally.
+
+      - name: Test
+        run: .\scripts\test.ps1
+        shell: pwsh
+
+      - name: Build
+        run: .\scripts\build.ps1 -Release
+        shell: pwsh
+
+      - name: Smoke test the built binary
+        shell: pwsh
+        run: |
+          $exe = 'bin\ProxyPacToggler.exe'
+          $out = New-TemporaryFile
+          foreach ($arg in @('--version', '--status', '--list')) {
+              $p = Start-Process $exe -ArgumentList $arg -Wait -PassThru -NoNewWindow -RedirectStandardOutput $out
+              Write-Host "== $arg (exit $($p.ExitCode))"
+              Get-Content $out
+              if ($p.ExitCode -ne 0) { throw "$arg exited with $($p.ExitCode)" }
+          }
+
+      - name: Zip
+        shell: pwsh
+        run: |
+          Compress-Archive -Path bin\ProxyPacToggler.exe, bin\SHA256SUMS.txt `
+                           -DestinationPath bin\ProxyPacToggler.zip -Force
+
+      - name: Attest build provenance
+        # Anyone can then verify the download really came out of this repo:
+        #   gh attestation verify ProxyPacToggler.exe --repo <owner>/ProxyPacToggler
+        if: github.event_name == 'push'
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: bin/ProxyPacToggler.exe
+
+      - name: Release (latest)
+        if: github.event_name == 'push'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Latest build
+          prerelease: true
+          files: |
+            bin/ProxyPacToggler.exe
+            bin/ProxyPacToggler.zip
+            bin/SHA256SUMS.txt
