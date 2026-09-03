@@ -1,0 +1,3 @@
+# Windows-only project: keep line endings stable for everyone who clones it.
+* text eol=crlf
+*.ico binary
