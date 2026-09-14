@@ -11,7 +11,7 @@ opens the menu. One 79 kB exe, no admin rights, touches only `HKCU` and
 ```
 git clone https://github.com/xerno/ProxyPacToggler
 cd ProxyPacToggler
-install.cmd
+.\install.cmd
 ```
 
 Tests, builds, installs into `%LOCALAPPDATA%\Programs\ProxyPacToggler` and runs at
@@ -55,9 +55,9 @@ wait for it: `Start-Process .\ProxyPacToggler.exe -ArgumentList '--status' -Wait
 
 | | |
 |---|---|
-| `build.cmd` | compile `src\` into `bin\` |
-| `test.cmd` | compile `src\` + `tests\` and run the tests |
-| `install.cmd` | test, build, install, launch |
+| `.\build.cmd` | compile `src\` into `bin\` |
+| `.\test.cmd` | compile `src\` + `tests\` and run the tests |
+| `.\install.cmd` | test, build, install, launch |
 
 Red tests build nothing. The `.cmd` files exist because batch is exempt from the
 PowerShell execution policy that blocks `.ps1` on a stock Windows; the logic is in
